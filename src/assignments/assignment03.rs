@@ -31,7 +31,13 @@ pub enum DayOfWeek {
 ///
 /// `next_weekday(Thu)` is `Fri`; and `next_weekday(Fri)` is `Mon`.
 pub fn next_weekday(day: DayOfWeek) -> DayOfWeek {
-    todo!()
+    match day {
+        DayOfWeek::Mon => DayOfWeek::Tue,
+        DayOfWeek::Tue => DayOfWeek::Wed,
+        DayOfWeek::Wed => DayOfWeek::Thu,
+        DayOfWeek::Thu => DayOfWeek::Fri,
+        DayOfWeek::Fri | DayOfWeek::Sat | DayOfWeek::Sun => DayOfWeek::Mon,
+    }
 }
 
 /// Custom option type.
@@ -58,7 +64,10 @@ pub enum MyOption<T> {
 /// assert_eq!(my_map(MyOption::MyNone, len), MyOption::MyNone);
 /// ```
 pub fn my_map<T, U, F: FnOnce(T) -> U>(v: MyOption<T>, f: F) -> MyOption<U> {
-    todo!()
+    match v {
+        MyOption::MySome(value) => MyOption::MySome(f(value)),
+        MyOption::MyNone => MyOption::MyNone,
+    }
 }
 
 /// Returns `MyNone` if the option is `MyNone`, otherwise calls `f` with the wrapped value and returns the result.
@@ -81,7 +90,10 @@ pub fn my_map<T, U, F: FnOnce(T) -> U>(v: MyOption<T>, f: F) -> MyOption<U> {
 /// assert_eq!(my_and_then(MyOption::MyNone, pos_then_to_string), MyOption::MyNone);
 /// ```
 pub fn my_and_then<T, U, F: FnOnce(T) -> MyOption<U>>(v: MyOption<T>, f: F) -> MyOption<U> {
-    todo!()
+    match v {
+        MyOption::MySome(value) => f(value),
+        MyOption::MyNone => MyOption::MyNone,
+    }
 }
 
 /// Given a list of integers, returns its median (when sorted, the value in the middle position).
@@ -107,14 +119,40 @@ pub fn my_and_then<T, U, F: FnOnce(T) -> MyOption<U>>(v: MyOption<T>, f: F) -> M
 ///
 /// Returns `None` if the list is empty.
 pub fn median(values: Vec<isize>) -> Option<isize> {
-    todo!()
+    let mut value = vec![];
+    for i in values {
+        value.push(i)
+    }
+    value.sort();
+    if value.is_empty() {
+        return None;
+    }
+    if value.len() % 2 == 0 {
+        Some(value[(value.len() + 1) / 2])
+    } else {
+        Some(value[value.len() / 2])
+    }
 }
 
 /// Given a list of integers, returns its smallest mode (the value that occurs most often; a hash map will be helpful here).
 ///
 /// Returns `None` if the list is empty.
 pub fn mode(values: Vec<isize>) -> Option<isize> {
-    todo!()
+    if values.is_empty() {
+        return None;
+    }
+    let mut num_map = HashMap::new();
+    let mut max_num = 0;
+    let mut max_mode = 0;
+    for i in values {
+        let entry = num_map.entry(i).or_insert(0);
+        *entry += 1;
+        if *entry > max_num {
+            max_num = *entry;
+            max_mode = i;
+        }
+    }
+    Some(max_mode)
 }
 
 /// Converts the given string to Pig Latin. Use the rules below to translate normal English into Pig Latin.
@@ -135,7 +173,31 @@ pub fn mode(values: Vec<isize>) -> Option<isize> {
 ///
 /// You may assume the string only contains lowercase alphabets, and it contains at least one vowel.
 pub fn piglatin(input: String) -> String {
-    todo!()
+    let chars: Vec<char> = input.chars().collect();
+    let mut vowel = 0_usize;
+    for (i, &ch) in chars.iter().enumerate() {
+        if ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u' {
+            vowel = i;
+            break;
+        }
+    }
+    let mut s = input;
+    if vowel == 0 {
+        s.push_str("hay");
+        s
+    } else if vowel == 1 {
+        let ch = s.remove(0);
+        s.push(ch);
+        s.push_str("ay");
+        s
+    } else {
+        let slice_front = &s[0..vowel];
+        let slice_end = &s[vowel..];
+        let mut slice = slice_end.to_string();
+        slice.push_str(slice_front);
+        slice.push_str("ay");
+        slice
+    }
 }
 
 /// Converts HR commands to the organization table.
@@ -160,5 +222,39 @@ pub fn piglatin(input: String) -> String {
 ///
 /// See the test function for more details.
 pub fn organize(commands: Vec<String>) -> HashMap<String, HashSet<String>> {
-    todo!()
+    let mut order_map = HashMap::new();
+
+    for str in commands {
+        let str_vec: Vec<&str> = str.split(' ').collect();
+        if str_vec[0] == "Add" {
+            let entry = order_map
+                .entry(str_vec[3].to_string())
+                .or_insert_with(HashSet::new);
+            let _out = (*entry).insert(str_vec[1].to_string());
+        } else if str_vec[0] == "Remove" {
+            let entry = order_map
+                .entry(str_vec[3].to_string())
+                .or_insert_with(HashSet::new);
+            let _out = (*entry).remove(&str_vec[1].to_string());
+            if (*entry).is_empty() {
+                let _out = order_map.remove(&str_vec[3].to_string());
+            }
+        } else if str_vec[0] == "Move" {
+            let entry = order_map
+                .entry(str_vec[3].to_string())
+                .or_insert_with(HashSet::new);
+            let out = (*entry).remove(&str_vec[1].to_string());
+            if !out {
+                continue;
+            }
+            if (*entry).is_empty() {
+                let _out = order_map.remove(&str_vec[3].to_string());
+            }
+            let entry = order_map
+                .entry(str_vec[5].to_string())
+                .or_insert_with(HashSet::new);
+            let _out = (*entry).insert(str_vec[1].to_string());
+        }
+    }
+    order_map
 }
