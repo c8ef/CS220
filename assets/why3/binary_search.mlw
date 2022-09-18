@@ -6,6 +6,7 @@
 
 module BinarySearch
 
+<<<<<<< HEAD
   use int.Int
   use int.ComputerDivision
   use ref.Ref
@@ -16,7 +17,37 @@ module BinarySearch
     ensures  { 0 <= result <= length a }
     ensures  { forall i: int. 0 <= i < result -> a[i] < v }
     ensures  { forall i: int. result <= i < length a -> v <= a[i] }
+=======
+  use import int.Int
+  use import ref.Ref
+  use import array.Array
+
+  exception Not_found (* raised to signal a search failure *)
+
+  val midpoint (l: int) (u: int) : int
+    requires { l <= u } ensures { l <= result <= u }
+
+  let binary_search (a : array int) (v : int)
+    requires { forall i1 i2 : int. 0 <= i1 < i2 < length a -> a[i1] <= a[i2] }
+    ensures  { 0 <= result <= length a }
+    ensures  { forall i: int. 0 <= i <= result -> a[i] <= v }
+    ensures  { result < length a -> a[result] >= v }
+    raises   { Not_found -> forall i. 0 <= i < length a -> a[i] <> v }
+>>>>>>> edbcdf7 (finish assignment 5)
   =
-    (* IMPORTANT: DON'T MODIFY THE ABOVE LINES *)
-    0 (* TODO *)
+    let ref l = 0 in
+    let ref u = length a - 1 in
+    while l <= u do
+      invariant { 0 <= l /\ u < length a }
+      invariant { forall i. 0 <= i < length a -> a[i] = v -> l <= i <= u }
+      variant { u - l }
+      let m = midpoint l u in
+      if a[m] < v then
+        l := m + 1
+      else if a[m] > v then
+        u := m - 1
+      else
+        return m
+    done;
+    raise Not_found
 end
