@@ -28,16 +28,20 @@ module BinarySearch
     requires { l <= u } ensures { l <= result <= u }
 
   let binary_search (a : array int) (v : int)
-    requires { forall i1 i2 : int. 0 <= i1 < i2 < length a -> a[i1] <= a[i2] }
-    ensures  { 0 <= result <= length a }
+    (* 前置条件 *)
+    requires { forall i1 i2 : int. 0 <= i1 < i2 < length a -> a[i1] < a[i2] }
+    (* 后置条件 *)
+    ensures  { 0 <= result < length a }
     ensures  { forall i: int. 0 <= i <= result -> a[i] <= v }
     ensures  { result < length a -> a[result] >= v }
+    (* 异常条件 *)
     raises   { Not_found -> forall i. 0 <= i < length a -> a[i] <> v }
 >>>>>>> edbcdf7 (finish assignment 5)
   =
     let ref l = 0 in
     let ref u = length a - 1 in
     while l <= u do
+      (* 循环不变式 *)
       invariant { 0 <= l /\ u < length a }
       invariant { forall i. 0 <= i < length a -> a[i] = v -> l <= i <= u }
       variant { u - l }
