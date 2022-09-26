@@ -35,55 +35,55 @@ pub fn from_usize<T: Semiring>(value: usize) -> T {
 
 impl Semiring for u64 {
     fn zero() -> Self {
-        todo!()
+        0_u64
     }
 
     fn one() -> Self {
-        todo!()
+        1_u64
     }
 
     fn add(&self, rhs: &Self) -> Self {
-        todo!()
+        self + rhs
     }
 
     fn mul(&self, rhs: &Self) -> Self {
-        todo!()
+        self * rhs
     }
 }
 
 impl Semiring for i64 {
     fn zero() -> Self {
-        todo!()
+        0_i64
     }
 
     fn one() -> Self {
-        todo!()
+        1_i64
     }
 
     fn add(&self, rhs: &Self) -> Self {
-        todo!()
+        self + rhs
     }
 
     fn mul(&self, rhs: &Self) -> Self {
-        todo!()
+        self * rhs
     }
 }
 
 impl Semiring for f64 {
     fn zero() -> Self {
-        todo!()
+        0_f64
     }
 
     fn one() -> Self {
-        todo!()
+        1_f64
     }
 
     fn add(&self, rhs: &Self) -> Self {
-        todo!()
+        self + rhs
     }
 
     fn mul(&self, rhs: &Self) -> Self {
-        todo!()
+        self * rhs
     }
 }
 
@@ -107,36 +107,116 @@ pub struct Polynomial<C: Semiring> {
 
 impl<C: Semiring> Semiring for Polynomial<C> {
     fn zero() -> Self {
-        todo!()
+        Self {
+            coefficients: HashMap::new(),
+        }
     }
 
     fn one() -> Self {
-        todo!()
+        let mut map = HashMap::new();
+        let _unuse = map.insert(0_u64, C::one());
+        Self { coefficients: map }
     }
 
     fn add(&self, rhs: &Self) -> Self {
-        todo!()
+        let mut map = self.coefficients.clone();
+        for (k, v) in &rhs.coefficients {
+            let entry = map.entry(*k).or_insert_with(C::zero);
+            *entry = v.add(entry);
+        }
+        map.retain(|_, v| *v != C::zero());
+        Self { coefficients: map }
     }
 
     fn mul(&self, rhs: &Self) -> Self {
-        todo!()
+        let mut pol = Self {
+            coefficients: HashMap::new(),
+        };
+        for (k, v) in &rhs.coefficients {
+            let mut inner_map = HashMap::new();
+            for key in self.coefficients.keys() {
+                let entry = self.coefficients.get(key).unwrap();
+                let _unuse = inner_map.insert(k + key, v.mul(entry));
+            }
+            pol = pol.add(&Self {
+                coefficients: inner_map,
+            });
+        }
+        pol.coefficients.retain(|_, v| *v != C::zero());
+        pol
     }
 }
 
 impl<C: Semiring> From<C> for Polynomial<C> {
     fn from(value: C) -> Self {
-        todo!()
+        let mut map = HashMap::new();
+        let _unuse = map.insert(0_u64, value);
+        Self { coefficients: map }
     }
 }
 
 impl<C: Semiring> Polynomial<C> {
     /// Constructs polynomial `x`.
     pub fn x() -> Self {
-        todo!()
+        let mut map = HashMap::new();
+        let _unused = map.insert(1_u64, C::one());
+        Self { coefficients: map }
     }
 
     /// Evaluates the polynomial with the given value.
     pub fn eval(&self, value: C) -> C {
-        todo!()
+        let mut out = C::zero();
+        for (k, v) in &self.coefficients {
+            let mut inner = C::one();
+            for _ in 0..*k {
+                inner = inner.mul(&value);
+            }
+            inner = inner.mul(v);
+            out = out.add(&inner);
+        }
+        out
+    }
+}
+
+struct FindIter<'s, T: Eq> {
+    query: &'s [T],
+    base: &'s [T],
+    curr: usize,
+}
+
+impl<T: Eq> Iterator for FindIter<'_, T> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut i = self.curr;
+        while i + self.query.len() <= self.base.len() {
+            let mut ans = 0;
+            for j in 0..self.query.len() {
+                if self.query[j] != self.base[i + j] {
+                    break;
+                } else {
+                    ans += 1;
+                }
+            }
+            if ans == self.query.len() {
+                break;
+            }
+            i += 1;
+        }
+        self.curr = i + 1;
+        if i + self.query.len() > self.base.len() {
+            None
+        } else {
+            Some(i)
+        }
+    }
+}
+
+/// Returns an iterator over substring query indexes in the base.
+pub fn find<'s, T: Eq>(query: &'s [T], base: &'s [T]) -> impl 's + Iterator<Item = usize> {
+    FindIter {
+        query,
+        base,
+        curr: 0,
     }
 }
